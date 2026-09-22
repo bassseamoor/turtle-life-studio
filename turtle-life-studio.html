@@ -4515,7 +4515,7 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
     '<button id="rmPause" style="font-size:16px;font-weight:700;border:0;border-radius:12px;padding:14px 22px;background:#1a2236;color:#fff">\u23F8 Pause</button>' +
     '<button id="rmCancel" style="font-size:16px;font-weight:700;border:0;border-radius:12px;padding:14px 22px;background:#3a1d1d;color:#ff9c9c">\u2715 Cancel</button>' +
     '</div>' +
-    '<div style="font-size:12px;color:#5b6b8c;margin-top:18px;max-width:300px;line-height:1.6">Keep this tab open while rendering.<br>You can pause anytime \u2014 progress is never lost.</div>';
+    '<div style="font-size:12px;color:#5b6b8c;margin-top:18px;max-width:300px;line-height:1.6">Keep this tab open while rendering.<br>You can pause anytime \u2014 but closing this tab loses the render.</div>';
   document.body.appendChild(overlay);
 
   function setStatus(s) { var el = document.getElementById('rmStatus'); if (el) el.textContent = s; }

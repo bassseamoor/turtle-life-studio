@@ -194,7 +194,7 @@
     <div class="seg" id="camSeg">
       <button data-v="journey">Follow animal</button><button data-v="drift">Drift</button><button data-v="locked">Still</button><button data-v="orbit">Orbit</button>
     </div>
-    <label for="journeySpeed">Turtle lifetime · 8 hours</label>
+    <label for="journeySpeed">Turtle lifetime · 40 minutes</label>
     <select id="journeySpeed" class="scene-select"><option value="1">Full story · 8 hours</option><option value="12">Preview · 40 minutes</option><option value="120">Preview · 4 minutes</option></select>
     <label for="lifeChapter">Life chapter</label><select id="lifeChapter" class="scene-select"></select>
     <label for="lifeSeek">Story position</label><input id="lifeSeek" type="range" min="0" max="28800" step="1" value="0" aria-label="Story position in seconds">
@@ -3363,7 +3363,7 @@ function computePalette() {
 const DEFAULTS = {
   seed: 0, locked: false, /* seed is assigned by the Seed Console on boot (?seed= or crypto-random) */
   biome: "tropical", fish: "med", plants: "med", corals: "med",
-  clarity: "crystal", light: "golden", camera: "journey",worldVersion:1,journeySpeed:1,dayCycle:true,cycleDuration:1800,oceanVolume:35,photoQuality:"screen",
+  clarity: "crystal", light: "golden", camera: "journey",worldVersion:2,journeySpeed:12,dayCycle:true,cycleDuration:1800,oceanVolume:35,photoQuality:"screen",
   layout:"auto",motion:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"calm":"auto",
   reefGlow:75,reefAuto:!window.matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
@@ -3372,8 +3372,8 @@ function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
     if (s && typeof s.seed === "number") settings = { ...DEFAULTS, ...s };
-    if(s&&s.worldVersion!==1){settings.camera="journey";settings.layout="auto";settings.clarity="crystal";settings.worldVersion=1;}
-    if(![1,12,120].includes(settings.journeySpeed))settings.journeySpeed=1;
+    if(s&&s.worldVersion!==2){settings.camera="journey";settings.layout="auto";settings.clarity="crystal";settings.journeySpeed=12;settings.worldVersion=2;}
+    if(![1,12,120].includes(settings.journeySpeed))settings.journeySpeed=12;
     settings.dayCycle=settings.dayCycle===true;
     settings.cycleDuration=[600,1800,3600].includes(settings.cycleDuration)?settings.cycleDuration:1800;
     settings.oceanVolume=Number.isFinite(settings.oceanVolume)?Math.max(0,Math.min(100,settings.oceanVolume)):35;

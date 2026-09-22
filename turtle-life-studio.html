@@ -4466,8 +4466,10 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
   var qs = new URLSearchParams(location.search);
   if (qs.get('render') !== '1') return;
 
-  var fps = Math.min(60, Math.max(1, parseInt(qs.get('fps'), 10) || 30));
+  var fps = Math.min(120, Math.max(1, parseInt(qs.get('fps'), 10) || 30));
   var seconds = Math.min(3600, Math.max(5, parseInt(qs.get('seconds'), 10) || 300));
+  var _wu = parseInt(qs.get('warmup'), 10);
+  var warmupFrames = (isNaN(_wu) || _wu < 0) ? 90 : Math.min(_wu, 600);
   var totalFrames = fps * seconds;
   var seed = qs.get('seed') || '';
   var qid = qs.get('qid') || '';
@@ -4482,21 +4484,37 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
   /* ---- shared state read by the studio's frame loop ---- */
   var RM = window.__renderMode = {
     fps: fps, W: W, H: H,
-    frame: 0, warmup: 90, totalFrames: totalFrames,
+    frame: 0, warmup: warmupFrames, totalFrames: totalFrames,
     phase: 'warmup', paused: false, _bp: false,
     onPhase: null, onFrame: null
   };
 
-  /* ---- take over the page ---- */
+  /* ---- take over the page ----
+     Generic: works no matter what the studio names its canvas or how deep
+     it sits in the DOM. The canvas's ancestor chain is kept visible so the
+     small live preview survives; everything else is hidden for speed. */
   var css = document.createElement('style');
   css.textContent =
-    'body.rendering>*:not(#rmOverlay):not(script):not(style){display:none!important;}' +
-    'body.rendering #rmOverlay{display:flex!important;}' +
-    'body.rendering canvas#scene{display:block!important;position:fixed!important;right:12px!important;top:12px!important;' +
-    'width:168px!important;height:94px!important;z-index:60!important;border-radius:10px!important;' +
-    'border:1px solid rgba(255,255,255,.25)!important;}';
+    'body.rendering>*:not(#rmOverlay):not(script):not(style):not([data-rm-keep]){display:none!important;}' +
+    'body.rendering #rmOverlay{display:flex!important;}';
   document.head.appendChild(css);
   document.body.classList.add('rendering');
+  try {
+    var _rc = window.__renderCanvas || document.querySelector('canvas');
+    if (_rc) {
+      var _n = _rc;
+      while (_n && _n !== document.body) { _n.setAttribute('data-rm-keep', '1'); _n = _n.parentElement; }
+      _rc.style.setProperty('display', 'block', 'important');
+      _rc.style.setProperty('position', 'fixed', 'important');
+      _rc.style.setProperty('right', '12px', 'important');
+      _rc.style.setProperty('top', '12px', 'important');
+      _rc.style.setProperty('width', '168px', 'important');
+      _rc.style.setProperty('height', '94px', 'important');
+      _rc.style.setProperty('z-index', '60', 'important');
+      _rc.style.setProperty('border-radius', '10px', 'important');
+      _rc.style.setProperty('border', '1px solid rgba(255,255,255,.25)', 'important');
+    }
+  } catch (e) {}
 
   var overlay = document.createElement('div');
   overlay.id = 'rmOverlay';
@@ -4570,7 +4588,8 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
          unsupported, so we skip the check and just configure. */
       encoder.configure({
         codec: 'avc1.640028', width: W, height: H,
-        bitrate: 12000000, framerate: fps
+        bitrate: Math.min(40000000, Math.round(12000000 * (W * H) / (1280 * 720))),
+        framerate: fps
       });
       RM.onFrame = encodeFrame;
       return true;
@@ -4614,6 +4633,7 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
     } catch (e) { fail('Couldn\u2019t finish the video: ' + e.message); return; }
     var buf = muxer.target.buffer;
     if (!buf || !buf.byteLength) { fail('The video came out empty.'); return; }
+    try { window.__renderResult = buf; } catch (e) {} /* lets automated tests grab the MP4 */
     var blob = new Blob([buf], { type: 'video/mp4' });
     var cleanSeed = seed.replace(/[^A-Za-z0-9]+/g, '').slice(0, 14) || 'seed';
     var name = studioLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') +
@@ -4682,13 +4702,12 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
       'style="font-size:16px;font-weight:700;border:0;border-radius:12px;padding:14px 24px;background:#1a2236;color:#fff">Back to queue</button>';
   };
 
-  /* ---- force render-size canvas, keep screen awake ---- */
+  /* ---- force render-size drawing buffer, keep screen awake ----
+     Set the buffer directly (reliable) and also try the studio's own
+     resize path if it exposes one (it may reallocate its targets). */
   try {
-    if (rcanvas) {
-      rcanvas.style.width = W + 'px';
-      rcanvas.style.height = H + 'px';
-    }
-    if (typeof loop !== 'undefined' && loop && loop.resize) loop.resize();
+    if (rcanvas) { rcanvas.width = W; rcanvas.height = H; }
+    if (typeof loop !== 'undefined' && loop && loop.resize) { try { loop.resize(); } catch (e) {} }
   } catch (e) {}
   try {
     if (navigator.wakeLock) {
@@ -4701,5 +4720,6 @@ b.setAttribute("aria-label",h?"Show interface":"Hide interface");});})();
 })();
 
 </script>
+
 </body>
 </html>
